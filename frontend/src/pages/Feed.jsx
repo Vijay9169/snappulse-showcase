@@ -2,11 +2,13 @@ import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { Heart, Trash2, Search, Sparkles, SlidersHorizontal } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
+import ProjectModal from "../components/ProjectModal";
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
   const { user, token } = useContext(AuthContext);
 
   const fetchPosts = async () => {
@@ -31,6 +33,14 @@ export default function Feed() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchPosts();
+      // Agar modal khula ho to uska data bhi live update ho jaye
+      if (selectedProject && selectedProject._id === postId) {
+        const isCurrentlyLiked = selectedProject.likes?.includes(user._id || user.id);
+        const updatedLikes = isCurrentlyLiked
+          ? selectedProject.likes.filter((id) => id !== (user._id || user.id))
+          : [...(selectedProject.likes || []), user._id || user.id];
+        setSelectedProject({ ...selectedProject, likes: updatedLikes });
+      }
     } catch (err) {
       console.error(err);
     }
@@ -43,6 +53,7 @@ export default function Feed() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPosts(posts.filter((p) => p._id !== postId));
+      if (selectedProject?._id === postId) setSelectedProject(null);
     } catch (err) {
       console.error(err);
     }
@@ -60,7 +71,7 @@ export default function Feed() {
 
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      {/* Hero Header + Search Bar Section */}
+      {/* Hero Header + Search Bar */}
       <div className="text-center max-w-3xl mx-auto mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-4">
           <Sparkles className="w-3.5 h-3.5" />
@@ -73,7 +84,7 @@ export default function Feed() {
           A high-performance showcase platform built for designers, developers, and visual artists.
         </p>
 
-        {/* Live Search Bar Input Box */}
+        {/* Live Search Input */}
         <div className="mt-6 relative max-w-xl mx-auto">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
             <Search className="w-5 h-5" />
@@ -122,7 +133,11 @@ export default function Feed() {
               key={post._id}
               className="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col justify-between"
             >
-              <div>
+              {/* YAHAN LAGA HAI ONCLICK: Image aur text par click karne se modal open hoga */}
+              <div 
+                className="cursor-pointer"
+                onClick={() => setSelectedProject(post)}
+              >
                 <div className="relative overflow-hidden aspect-[16/10] bg-slate-100">
                   <img
                     src={post.imageUrl}
@@ -148,7 +163,7 @@ export default function Feed() {
                 </div>
               </div>
 
-              {/* Card Footer */}
+              {/* Card Footer (Like & Delete Controls) */}
               <div className="p-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <img
@@ -188,7 +203,7 @@ export default function Feed() {
         })}
       </div>
 
-      {/* No Results Found */}
+      {/* No Results Fallback */}
       {filteredPosts.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
           <div className="mx-auto w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mb-3">
@@ -199,6 +214,16 @@ export default function Feed() {
             Search query ya filter adjust karke dobara dekhein.
           </p>
         </div>
+      )}
+
+      {/* LIGHTBOX / PROJECT DETAILS POPUP MODAL */}
+      {selectedProject && (
+        <ProjectModal
+          project={selectedProject}
+          onClose={() => setSelectedProject(null)}
+          onLike={handleLike}
+          isLiked={user && selectedProject.likes?.includes(user._id || user.id)}
+        />
       )}
     </div>
   );

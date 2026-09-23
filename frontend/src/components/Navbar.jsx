@@ -31,8 +31,14 @@ export default function Navbar() {
                 Upload Project
               </Link>
               <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-                <img src={user.avatar} alt="avatar" className="w-8 h-8 rounded-full bg-slate-100 border" />
-                <span className="text-sm font-semibold hidden sm:inline-block">{user.name}</span>
+                {/* <img src={user.avatar} alt="avatar" className="w-8 h-8 rounded-full bg-slate-100 border" />
+                <span className="text-sm font-semibold hidden sm:inline-block">{user.name}</span> */}
+
+                <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
+                  <img src={user.avatar} className="w-8 h-8 rounded-full border border-slate-200" alt={user.name} />
+                  <span className="text-sm font-semibold text-slate-700">{user.name}</span>
+                </Link>
+
                 <button
                   onClick={handleLogout}
                   title="Logout"
